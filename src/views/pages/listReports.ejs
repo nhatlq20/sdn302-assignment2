@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - Bug Report App</title>
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-white">
+
+  <!-- Header / Navbar -->
+  <%- include('../partials/header') %>
+
+  <!-- Main Content -->
+  <main class="container my-4 flex-grow-1">
+
+    <!-- Flash / Query Message Alert -->
+    <% 
+      const alertMsg = (typeof message !== 'undefined' && message) ? message : (typeof query !== 'undefined' && query.message ? query.message : ''); 
+      const alertType = (typeof type !== 'undefined' && type) ? type : (typeof query !== 'undefined' && query.type ? query.type : 'success'); 
+    %>
+    <% if (alertMsg) { %>
+      <div class="alert alert-<%= alertType === 'error' ? 'danger' : alertType %> mb-4" role="alert">
+        <%= alertMsg %>
+      </div>
+    <% } %>
+
+    <!-- Header Row: Title & Create Report Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="fw-bold mb-0 h2">Reports</h1>
+      <a href="/reports/create" class="btn btn-primary px-3">Create Report</a>
+    </div>
+
+    <!-- Filter Form -->
+    <form action="/reports" method="GET" class="d-flex flex-wrap gap-2 align-items-center mb-4">
+      <div style="width: 190px;">
+        <input 
+          type="text" 
+          name="project" 
+          class="form-control" 
+          placeholder="Project" 
+          value="<%= typeof query !== 'undefined' && query.project ? query.project : '' %>"
+        >
+      </div>
+
+      <div style="width: 140px;">
+        <select name="status" class="form-select">
+          <option value="" <%= typeof query === 'undefined' || !query.status ? 'selected' : '' %>>All status</option>
+          <option value="open" <%= typeof query !== 'undefined' && query.status === 'open' ? 'selected' : '' %>>open</option>
+          <option value="in-progress" <%= typeof query !== 'undefined' && query.status === 'in-progress' ? 'selected' : '' %>>in-progress</option>
+          <option value="resolved" <%= typeof query !== 'undefined' && query.status === 'resolved' ? 'selected' : '' %>>resolved</option>
+          <option value="closed" <%= typeof query !== 'undefined' && query.status === 'closed' ? 'selected' : '' %>>closed</option>
+        </select>
+      </div>
+
+      <div style="width: 140px;">
+        <select name="severity" class="form-select">
+          <option value="" <%= typeof query === 'undefined' || !query.severity ? 'selected' : '' %>>All severity</option>
+          <option value="low" <%= typeof query !== 'undefined' && query.severity === 'low' ? 'selected' : '' %>>low</option>
+          <option value="medium" <%= typeof query !== 'undefined' && query.severity === 'medium' ? 'selected' : '' %>>medium</option>
+          <option value="high" <%= typeof query !== 'undefined' && query.severity === 'high' ? 'selected' : '' %>>high</option>
+        </select>
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-secondary px-3">Filter</button>
+      </div>
+    </form>
+
+    <!-- Helper Format Date -->
+    <% 
+      function formatDate(d) {
+        if (!d) return '';
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        const day = pad(date.getDate());
+        const month = pad(date.getMonth() + 1);
+        const year = date.getFullYear();
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+      }
+    %>
+
+    <!-- Reports Table -->
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead>
+          <tr>
+            <th scope="col" class="fw-bold text-nowrap">Title</th>
+            <th scope="col" class="fw-bold text-nowrap">Project</th>
+            <th scope="col" class="fw-bold text-nowrap">Severity</th>
+            <th scope="col" class="fw-bold text-nowrap">Status</th>
+            <th scope="col" class="fw-bold text-nowrap">Assigned To</th>
+            <th scope="col" class="fw-bold text-nowrap">Created At</th>
+            <th scope="col" class="fw-bold text-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (typeof reports !== 'undefined' && reports && reports.length > 0) { %>
+            <% reports.forEach(report => { %>
+              <tr>
+                <td><%= report.title %></td>
+                <td><%= report.project || '' %></td>
+                <td><%= report.severity %></td>
+                <td><%= report.status %></td>
+                <td>
+                  <%= report.assignedTo ? report.assignedTo.name : (report.assignTo ? report.assignTo.name : 'Unassigned') %>
+                </td>
+                <td class="text-nowrap">
+                  <%= formatDate(report.createdAt) %>
+                </td>
+                <td class="text-nowrap">
+                  <div class="d-inline-flex gap-2">
+                    <a href="/reports/edit/<%= report._id %>" class="btn btn-sm btn-outline-primary px-2 py-1">Edit</a>
+                    <form action="/reports/delete/<%= report._id %>" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-1">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
