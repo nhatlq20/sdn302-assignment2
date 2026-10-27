@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDN302 - Assignment 2 | Bug Report Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent: #06b6d4;
+      --accent-glow: rgba(6, 182, 212, 0.25);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glowing background shapes */
+    .glow-sphere {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-1 {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      top: -80px;
+      left: -100px;
+    }
+
+    .glow-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      bottom: -60px;
+      right: -80px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 44px 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      text-align: center;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #34d399;
+      margin-bottom: 24px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #ffffff 40%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* Student info card */
+    .info-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 28px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      text-align: left;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .info-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Tech pills */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .tag {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #d1d5db;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+      color: white;
+      box-shadow: 0 10px 25px -5px var(--primary-glow);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      color: #e5e7eb;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .redirect-timer {
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-cancel {
+      background: none;
+      border: none;
+      color: #818cf8;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 0;
+    }
+
+    .btn-cancel:hover {
+      color: #a5b4fc;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #6b7280;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 32px 20px;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      .info-card {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-sphere glow-1"></div>
+  <div class="glow-sphere glow-2"></div>
+
+  <main class="container">
+    <div class="badge-live">
+      <span class="pulse-dot"></span>
+      Backend & Database đang hoạt động
+    </div>
+
+    <h1>Bug Report Management</h1>
+    <p class="subtitle">Hệ thống quản lý báo cáo lỗi & người dùng được xây dựng trên nền tảng Express.js và MongoDB Atlas.</p>
+
+    <!-- Student details -->
+    <div class="info-card">
+      <div class="info-item">
+        <span class="info-label">Sinh viên</span>
+        <span class="info-value">Lê Quang Nhật</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Mã số sinh viên</span>
+        <span class="info-value">CE190875</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Môn học</span>
+        <span class="info-value">SDN302 (Assignment 2)</span>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="tags-container">
+      <span class="tag">⚡ Node.js / Express</span>
+      <span class="tag">🍃 MongoDB Atlas</span>
+      <span class="tag">📄 EJS Engine</span>
+      <span class="tag">☁️ Heroku Deployed</span>
+      <span class="tag">🔥 Firebase Portal</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <a id="btn-heroku" href="https://sdn-demo-heroku-cd1b468cc422.herokuapp.com/reports" class="btn btn-primary">
+        <span>🚀 Truy cập ứng dụng trực tiếp trên Heroku</span>
+      </a>
+      <a href="https://github.com/nhatlq20/sdn302-assignment2" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        <span>📂 Xem kho lưu trữ mã nguồn (GitHub)</span>
+      </a>
+    </div>
+
+    <div class="redirect-timer" id="timer-box">
+      <span>Tự động chuyển tiếp đến ứng dụng sau <strong id="countdown">4</strong> giây...</span>
+      <button class="btn-cancel" id="btn-cancel" type="button">Hủy</button>
+    </div>
+
+    <footer>
+      Assignment 2 - SDN302 © 2026 Lê Quang Nhật (CE190875). All rights reserved.
+    </footer>
+  </main>
+
+  <script>
+    let seconds = 4;
+    const countdownEl = document.getElementById('countdown');
+    const timerBox = document.getElementById('timer-box');
+    const cancelBtn = document.getElementById('btn-cancel');
+    const targetUrl = 'https://sdn-demo-heroku-cd1b468cc422.herokuapp.com/reports';
+
+    const interval = setInterval(() => {
+      seconds--;
+      if (countdownEl) countdownEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        window.location.href = targetUrl;
+      }
+    }, 1000);
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        clearInterval(interval);
+        timerBox.innerHTML = '<span style="color: #10b981;">✓ Đã hủy tự động chuyển hướng. Bạn có thể bấm nút trên để vào ứng dụng bất kỳ lúc nào.</span>';
+      });
+    }
+  </script>
+</body>
+</html>
